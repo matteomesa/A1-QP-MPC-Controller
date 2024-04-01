@@ -279,3 +279,4 @@ Please create issues for any installation problem.
 We referenced the controller architecture written by Dr. Xinye Da, General Manager of PX Robotics. 
 
 Zixin Zhang implemented a part of the convex MPC controller and the terrain adaption feature.  
+# A1-QP-MPC-Controller
