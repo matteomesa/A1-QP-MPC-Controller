@@ -38,11 +38,6 @@ include_directories(
 include_directories(/usr/local/include/osqp)
 find_package(OsqpEigen REQUIRED)
 
-# add unitree hardware library, these flags must be correctly set
-include_directories(
-        $ENV{UNITREE_LEGGED_SDK_PATH}/include
-)
-
 link_directories($ENV{UNITREE_LEGGED_SDK_PATH}/lib)
 set(EXTRA_LIBS -pthread libunitree_legged_sdk_amd64.so lcm)
 
@@ -75,15 +70,10 @@ add_library(isaac_a1_lib
         src/IsaacA1ROS.cpp
         )
 
-add_library(hardware_a1_lib
-        src/HardwareA1ROS.h
-        src/HardwareA1ROS.cpp
-        )
 
 # all robots depends on the a1_lib
 target_link_libraries(gazebo_a1_lib a1_lib)
 target_link_libraries(isaac_a1_lib a1_lib)
-target_link_libraries(hardware_a1_lib a1_lib ${EXTRA_LIBS})
 
 # Declare a cpp executable for isaac robot
 add_executable(isaac_a1_ctrl src/MainIsaac.cpp)
@@ -101,13 +91,6 @@ target_link_libraries(gazebo_a1_ctrl
         OsqpEigen::OsqpEigen
         )
 
-# Declare a cpp executable for hardware robot
-add_executable(hardware_a1_ctrl src/MainHardware.cpp)
-target_link_libraries(hardware_a1_ctrl
-        hardware_a1_lib
-        ${catkin_LIBRARIES}
-        OsqpEigen::OsqpEigen
-        )
 
 # tests
 # Declare a cpp executable

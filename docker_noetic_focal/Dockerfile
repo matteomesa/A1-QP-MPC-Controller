@@ -38,10 +38,21 @@ RUN curl https://bootstrap.pypa.io/pip/get-pip.py -o get-pip.py
 RUN python get-pip.py
 RUN rm get-pip.py
 RUN pip --version
-# RUN pip install pybullet
-# RUN pip install tensorflow
-# RUN pip install numpy
-# RUN pip install scipy
+RUN pip install pybullet
+RUN pip install tensorflow
+RUN pip install numpy
+RUN pip install scipy
+
+# install cmake 3.20 
+WORKDIR /tmp 
+RUN apt-get -y install wget libtool
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2.tar.gz
+RUN tar -zxvf cmake-3.20.2.tar.gz
+RUN ls
+WORKDIR /tmp/cmake-3.20.2
+RUN ./bootstrap
+RUN make -j8
+RUN make install
 
 # change timezone (this is very important otherwise many ROS topic time will be strange)
 ENV TZ=America/New_York
@@ -74,7 +85,7 @@ RUN make install
 
 # lcm dependencies, notice ContactImplicitMPC.jl needs 2.68.3, we try 2.64.6 first
 RUN apt-cache madison libglib2.0-dev
-RUN apt-get install -y libglib2.0-0=2.64.6-1~ubuntu20.04.4 libglib2.0-dev=2.64.6-1~ubuntu20.04.4
+RUN apt-get install -y libglib2.0-0 libglib2.0-dev
 # WORKDIR /tmp
 # RUN wget http://archive.ubuntu.com/ubuntu/pool/main/g/glib2.0/libglib2.0-0_2.68.4-1ubuntu1_amd64.deb
 # RUN dpkg -i libglib2.0-0_2.68.4-1ubuntu1_amd64.deb
@@ -101,20 +112,14 @@ RUN git clone https://github.com/lcm-proj/lcm.git && \
 # notice we must use v3.2 
 WORKDIR $SUPPORT_WS
 RUN git clone https://github.com/unitreerobotics/unitree_legged_sdk.git && \
-    cd ${SUPPORT_WS}/unitree_legged_sdk && git checkout v3.2 && \
+    cd ${SUPPORT_WS}/unitree_legged_sdk && \
+    pwd && \
     mkdir build && \
     cd build && \
     cmake .. && \
     make -j12 
 
-WORKDIR $SUPPORT_WS
-RUN git clone https://github.com/unitreerobotics/aliengo_sdk.git && \
-    cd ${SUPPORT_WS}/aliengo_sdk && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make -j12     
-
+  
 # install necessary dependencies 
 RUN   if [ "x$(nproc)" = "x1" ] ; then export USE_PROC=1 ; \
       else export USE_PROC=$(($(nproc)/2)) ; fi && \
@@ -133,13 +138,11 @@ WORKDIR $UNITREE_WS
 # RUN perl -pi -e 's/[^[:ascii:]]//g' $UNITREE_WS/src/unitree_ros/unitree_legged_msgs/msg/MotorState.msg 
 ENV UNITREE_SDK_VERSION=3_2
 ENV UNITREE_LEGGED_SDK_PATH=${SUPPORT_WS}/unitree_legged_sdk
-ENV ALIENGO_SDK_PATH=${SUPPORT_WS}/aliengo_sdk
-ENV UNITREE_PLATFORM=amd64
+ENV UNITREE_PLATFORM=arm64
 RUN echo "#unitree config" >> ~/.bashrc
 RUN echo "export export UNITREE_SDK_VERSION=3_2" >> ~/.bashrc
 RUN echo "export UNITREE_LEGGED_SDK_PATH=${SUPPORT_WS}/unitree_legged_sdk" >> ~/.bashrc
-RUN echo "export ALIENGO_SDK_PATH=${SUPPORT_WS}/aliengo_sdk" >> ~/.bashrc
-RUN echo "export UNITREE_PLATFORM=\"amd64\"" >> ~/.bashrc
+RUN echo "export UNITREE_PLATFORM=\"arm64\"" >> ~/.bashrc
 RUN echo "source ${UNITREE_WS}/devel/setup.bash" >> ~/.bashrc
 # RUN echo "export ROS_MASTER_URI=http://192.168.123.2:11311;export ROS_IP=192.168.123.2;export ROS_HOSTNAME=192.168.123.2" >> ~/.bashrc
 # compile just unitree ros unitree_legged_msgs
@@ -262,17 +265,6 @@ RUN echo "export ROS_MASTER_URI=http://localhost:11311;export ROS_IP=localhost;e
 
 
 RUN echo "export PATH=/usr/local/julia/bin:${PATH}" >> ~/.bashrc
-
-# install cmake 3.20 
-WORKDIR /tmp 
-RUN apt-get -y install wget libtool
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2.tar.gz
-RUN tar -zxvf cmake-3.20.2.tar.gz
-RUN ls
-WORKDIR /tmp/cmake-3.20.2
-RUN ./bootstrap
-RUN make -j8
-RUN make install
 
 
 # install glib 2.68
